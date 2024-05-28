@@ -78,6 +78,10 @@ def copy_passwords_to_clipboard(password):
     pyperclip.copy(password)
 
 
+def pull_password_from_clipboard():
+    return pyperclip.paste()
+
+
 operation=sys.argv[1].lower()
 user=sys.argv[2].lower()
 if len(sys.argv)==4:
@@ -100,7 +104,7 @@ elif operation not in ("get", "put"):
 elif operation == "get": 
     if user not in load_passwords():
         print(f"User Name {user} not found in password list, ensure password is loaded.")
-        print(f"Loaded Users: {[key for key in load_passwords()]}")
+        print(f"Loaded Users: {[key for key in load_passwords()]}.")
         exit(1)
     else:
         print(f"Password for {user} is {get_password(user)}, password is in your copy buffer.")
@@ -109,8 +113,16 @@ elif operation == "put":
     if len(sys.argv) != 4:
         print(f"Usage for put operation: <put> <user> <password>")
     elif user in load_passwords():
-        print(f"User name {user} found in passwords dictionary, will be updating with {password}")
-        update_password(user, password)
+        if password == "clipboard":
+            print(f"User name {user} found in passwords dictionary, will be updating with {pull_password_from_clipboard()} from the clipboard.")
+            update_password(user, pull_password_from_clipboard())
+        else:
+            print(f"User name {user} found in passwords dictionary, will be updating with {password}.")
+            update_password(user, password)
     else:
-        print(f"Adding {user}'s password {password} to dictionary")
-        update_password(user, password)
+        if password == "clipboard":
+            print(f"Adding {user}'s password {pull_password_from_clipboard()} from the clipboard.")
+            update_password(user, pull_password_from_clipboard())
+        else:
+            print(f"Adding user name {user} password {password}.")
+            update_password(user, password)
