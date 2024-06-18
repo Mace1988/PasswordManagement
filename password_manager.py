@@ -2,28 +2,26 @@ import sys
 from cryptography.fernet import Fernet
 import json
 import pyperclip
+import password_config
 
-key_file=r"C:\Users\a673538\OneDrive - Bread Financial\Documents\Scripts\Python\PasswordManagement\secret.key"
-password_file=r"C:\Users\a673538\OneDrive - Bread Financial\Documents\Scripts\Python\PasswordManagement\passwords.json"
-
-#Only used during start operation, should populate with your intial list of passwords to save time.
-intial_passwords = {
-    "d_aa-a673538": "8=LQbWVLAYvtqu/d",
-    "q_aa-a673538": "jsAb!JUmO2/IyCae",
-    "aa-a673538": "h6Lru/epx85i2j0x"
-}
+key_file = password_config.key_file
+password_file = password_config.password_file
+initial_passwords = password_config.initial_passwords
 
 def generate_key():
+    global key_file
     key = Fernet.generate_key()
-    with open(key_file, "wb") as key_file:
-        key_file.write(key)
+    with open(key_file, "wb") as file:
+        file.write(key)
 
 
 def load_key():
     return open(key_file, "rb").read()
 
 
-def encrypt_password(password):
+def encrypt_password(
+
+        password):
     key = load_key()
     fernet = Fernet(key)
     encrypted_password = fernet.encrypt(password.encode())
@@ -37,14 +35,13 @@ def decrypt_password(encrypted_password):
     return decrypted_password
 
 
-# Can pass in a dictionary of intial passwords, will create the encryped passwords file.
+
 def store_passwords(passwords, filename=password_file):
     encrypted_passwords = {user: encrypt_password(pw) for user, pw in passwords.items()}
     with open(filename, "w") as file:
         json.dump({user: enc_pw.decode() for user, enc_pw in encrypted_passwords.items()}, file)
 
 
-# Used to view all decryped passwords. Output is a dictionary.
 def load_passwords(filename=password_file):
     with open(filename, "r") as file:
         encrypted_passwords = json.load(file)
@@ -82,47 +79,55 @@ def pull_password_from_clipboard():
     return pyperclip.paste()
 
 
-operation=sys.argv[1].lower()
-user=sys.argv[2].lower()
-if len(sys.argv)==4:
-    password=sys.argv[3]
+def display_users(filename=password_file):
+    with open(filename, "r") as file:
+        users = json.load(file).keys()
+        return [user_id for user_id in users]
 
-if operation == "start":
-    answer=input("Start operation should only be done once, it will generate your secret key for encryption and decryption and create your initial json password file based on the initial_passwords dictionary. Are you sure? Y/N").lower()
-    if answer=="Y":
-        generate_key()
-        store_passwords(intial_passwords)
-    else:
-        print("Okay, exiting")
-        exit(0)
-elif len(sys.argv) < 3:
-    print("Usage: get/put user <password>")
-    exit(1)
-elif operation not in ("get", "put"):
-    print(f"Argument {operation} not valid, expecting 'get' / 'put'")
-    exit(1)
-elif operation == "get": 
-    if user not in load_passwords():
-        print(f"User Name {user} not found in password list, ensure password is loaded.")
-        print(f"Loaded Users: {[key for key in load_passwords()]}.")
+
+if __name__ == "__main__":
+    operation = sys.argv[1].lower()
+    if len(sys.argv) == 4:
+        password=sys.argv[3]
+
+    if operation == "start":
+        answer=input("Start operation should only be done once, it will generate your secret key for encryption and decryption and create your initial json password file based on the initial_passwords dictionary. Are you sure? Y/N ").lower()
+        if answer == "y":
+            generate_key()
+            store_passwords(initial_passwords)
+        else:
+            print("Okay, exiting")
+            exit(0)
+    elif len(sys.argv) < 3:
+        print("Usage: get/put user <password>")
         exit(1)
-    else:
-        print(f"Password for {user} is {get_password(user)}, password is in your copy buffer.")
-        copy_passwords_to_clipboard(get_password(user))
-elif operation == "put":
-    if len(sys.argv) != 4:
-        print(f"Usage for put operation: <put> <user> <password>")
-    elif user in load_passwords():
-        if password == "clipboard":
-            print(f"User name {user} found in passwords dictionary, will be updating with {pull_password_from_clipboard()} from the clipboard.")
-            update_password(user, pull_password_from_clipboard())
+    elif operation not in ("get", "put"):
+        print(f"Argument {operation} not valid, expecting 'get' / 'put'")
+        exit(1)
+    elif operation == "get":
+        user = sys.argv[2].lower()
+        if user not in load_passwords():
+            print(f"User Name {user} not found in password list, ensure password is loaded.")
+            print(f"Loaded Users: {[key for key in load_passwords()]}.")
+            exit(1)
         else:
-            print(f"User name {user} found in passwords dictionary, will be updating with {password}.")
-            update_password(user, password)
-    else:
-        if password == "clipboard":
-            print(f"Adding {user}'s password {pull_password_from_clipboard()} from the clipboard.")
-            update_password(user, pull_password_from_clipboard())
+            print(f"Password for {user} is {get_password(user)}, password is in your copy buffer.")
+            copy_passwords_to_clipboard(get_password(user))
+    elif operation == "put":
+        user = sys.argv[2].lower()
+        if len(sys.argv) != 4:
+            print(f"Usage for put operation: <put> <user> <password>")
+        elif user in load_passwords():
+            if password == "clipboard":
+                print(f"User name {user} found in passwords dictionary, will be updating with {pull_password_from_clipboard()} from the clipboard.")
+                update_password(user, pull_password_from_clipboard())
+            else:
+                print(f"User name {user} found in passwords dictionary, will be updating with {password}.")
+                update_password(user, password)
         else:
-            print(f"Adding user name {user} password {password}.")
-            update_password(user, password)
+            if password == "clipboard":
+                print(f"Adding {user}'s password {pull_password_from_clipboard()} from the clipboard.")
+                update_password(user, pull_password_from_clipboard())
+            else:
+                print(f"Adding user name {user} password {password}.")
+                update_password(user, password)
