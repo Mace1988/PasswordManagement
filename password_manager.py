@@ -66,8 +66,8 @@ def check_passwords():
         return {user: decrypt_password(enc_pw.encode()) for user, enc_pw in encrypted_passwords.items()}
 
 
-def get_password(requested_user, password_json_file):
-    with open(password_json_file, "r") as file:
+def get_password(requested_user):
+    with open(password_file, "r") as file:
         encrypted_passwords = json.load(file)
     if requested_user in encrypted_passwords:
         return decrypt_password(encrypted_passwords[requested_user].encode())
@@ -75,14 +75,13 @@ def get_password(requested_user, password_json_file):
         return None
 
 
-def update_password(user, password, password_json_file):
-    with open(password_json_file, "r") as file:
+def update_password(user_input, user_password):
+    with open(password_file, "r") as file:
         encrypted_passwords = json.load(file)
-    encrypted_password = encrypt_password(password).decode()
-    encrypted_passwords[user] = encrypted_password
-    with open(password_json_file, "w") as file:
+    encrypted_password = encrypt_password(user_password).decode()
+    encrypted_passwords[user_input] = encrypted_password
+    with open(password_file, "w") as file:
         json.dump(encrypted_passwords, file)
-    print(f"Password for {user} has been updated/added.")
 
 
 def copy_passwords_to_clipboard(password_to_copy):
@@ -93,61 +92,48 @@ def pull_password_from_clipboard():
     return pyperclip.paste()
 
 
-def display_users(filename=password_file):
-    with open(filename, "r") as file:
+def display_users():
+    with open(password_file, "r") as file:
         users = json.load(file).keys()
         return [user_id for user_id in users]
 
 
-# load_key()
+"""
+Input Options:
+python script.py get <user>
 
-# if __name__ == "__main__":
-    # operation = sys.argv[1].lower()
-#     if len(sys.argv) == 4:
-#         password=sys.argv[3]
-#
-#     if operation == "start":
-#         answer=input("Start operation should only be done once, it will generate your secret key for encryption and decryption and create your initial json password file based on the initial_passwords dictionary. Are you sure? Y/N ").lower()
-#         if answer == "y":
-#             generate_key()
-#             store_passwords(initial_passwords)
-#         else:
-#             print("Okay, exiting")
-#             exit(0)
-#     elif len(sys.argv) < 3:
-#         print("Usage: get/put user <password>")
-#         exit(1)
-#     elif operation not in ("get", "put"):
-#         print(f"Argument {operation} not valid, expecting 'get' / 'put'")
-#         exit(1)
-#     elif operation == "get":
-#         user = sys.argv[2].lower()
-#         if user not in check_passwords():
-#             print(f"User Name {user} not found in password list, ensure password is loaded.")
-#             print(f"Loaded Users: {[key for key in check_passwords()]}.")
-#             exit(1)
-#         else:
-#             print(f"Password for {user} is {get_password(user)}, password is in your copy buffer.")
-#             copy_passwords_to_clipboard(get_password(user))
-test_user = "test_user1"
-test_password = "test_passwor6"
+python script.py put <user> <password>
 
-print(get_password(test_user, password_file))
-#     elif operation == "put":
-#         user = sys.argv[2].lower()
-#         if len(sys.argv) != 4:
-#             print(f"Usage for put operation: <put> <user> <password>")
-#         elif user in check_passwords():
-#             if password == "clipboard":
-#                 print(f"User name {user} found in passwords dictionary, will be updating with {pull_password_from_clipboard()} from the clipboard.")
-#                 update_password(user, pull_password_from_clipboard())
-#             else:
-#                 print(f"User name {user} found in passwords dictionary, will be updating with {password}.")
-#                 update_password(user, password)
-#         else:
-#             if password == "clipboard":
-#                 print(f"Adding {user}'s password {pull_password_from_clipboard()} from the clipboard.")
-#                 update_password(user, pull_password_from_clipboard())
-#             else:
-#                 print(f"Adding user name {user} password {password}.")
-#                 update_password(user, password)
+python script.py put <user> clipboard
+"""
+if __name__ == "__main__":
+    if len(sys.argv) < 2 or sys.argv[1].lower() not in ("get", "put"):
+        print("Usage: get/put user <password>|clipboard")
+    elif sys.argv[1].lower() == "get":
+        try:
+            user = sys.argv[2].lower()
+        except IndexError:
+            print("User required for get operation. Usage: get/put user <password>|clipboard")
+        else:
+            if user not in check_passwords():
+                print(f"User Name {user} not found in password list, ensure password is loaded.")
+                print(f"Loaded Users: {[key for key in check_passwords()]}.")
+                exit(1)
+            else:
+                print(f"Password for {user} is {get_password(user)}, password is in your copy buffer.")
+                copy_passwords_to_clipboard(get_password(user))
+    elif sys.argv[1].lower() == "put":
+        try:
+            user = sys.argv[2].lower()
+            password = sys.argv[3].lower()
+        except IndexError:
+            print("User and password required for put operation. Usage: get/put user <password>|clipboard")
+        else:
+            if password == "clipboard":
+                print(f"Updating {user} with password {pull_password_from_clipboard()} from the clipboard.")
+                update_password(user, pull_password_from_clipboard())
+            else:
+                print(f"Updating {user} with {password}.")
+                update_password(user, password)
+    else:
+        print("End of loop")
