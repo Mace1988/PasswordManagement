@@ -1,16 +1,34 @@
 import sys
+import os
 from cryptography.fernet import Fernet
 import json
 import pyperclip
 
 
-key_file = r"/Users/masonfrance/Projects/PasswordManagement/secret.key"
-password_file = r"/Users/masonfrance/Projects/PasswordManagement/passwords.json"
+config_dir = "/pw_config/"
+key_file = rf"{config_dir}secret.key"
+password_file = rf"{config_dir}passwords.json"
 
-#TODO 2. Remove initial passwords population functionality. Complicates the code and the GUI will relieve a lot of the work.
-#TODO 3. Create new input flow. have integrated startup functionality to generate keys and files automatically.
-#TODO 4. In the load_key block, if we blindly generate a new key while having an existing passwords file lingering, we
-# won't be able to decrypt. May need to give a warning and if approved, generate new key and create new blank file?
+"""
+TODO 2. In the init block, if we blindly generate a new key while having an existing passwords file lingering, we won't be able to decrypt. May need to give a warning and if approved, generate new key and create new blank file?
+
+"""
+
+
+def make_dirs():
+    os.makedirs(config_dir, exist_ok=True)
+
+
+def create_empty_file():
+    open(password_file, "a").close()
+
+
+def check_key_file():
+    return os.path.isfile(key_file)
+
+
+def check_password_file():
+    return os.path.isfile(password_file)
 
 
 def generate_key():
@@ -21,14 +39,7 @@ def generate_key():
 
 
 def load_key():
-    try:
-        read_key = open(key_file, "rb").read()
-    except FileNotFoundError:
-        print("Key file not found, generating new")
-        # may need to have a check to see if passwords are already in file, will be using a different key,
-        # will need to give a warning that we need to clean up the password file
-        generate_key()
-        read_key = open(key_file, "rb").read()
+    read_key = open(key_file, "rb").read()
     return read_key
 
 
@@ -45,25 +56,11 @@ def decrypt_password(password_to_decrypt):
     decrypted_password = fernet.decrypt(password_to_decrypt).decode()
     return decrypted_password
 
-# Was used for initial password bulk creation, removing with introduction of gui
-# def store_passwords(passwords, filename=password_file):
-#     encrypted_passwords = {user: encrypt_password(pw) for user, pw in passwords.items()}
-#     with open(filename, "w") as file:
-#         json.dump({user: enc_pw.decode() for user, enc_pw in encrypted_passwords.items()}, file)
-
 
 def check_passwords():
-    try:
-        with open(password_file, "r") as file:
-            encrypted_passwords = json.load(file)
-    except FileNotFoundError:
-        print("Password file not found, creating blank")
-        encrypted_passwords = {}
-        with open(password_file, "w") as file:
-            json.dump(encrypted_passwords, file)
-        return encrypted_passwords
-    else:
-        return {user: decrypt_password(enc_pw.encode()) for user, enc_pw in encrypted_passwords.items()}
+    with open(password_file, "r") as file:
+        encrypted_passwords = json.load(file)
+    return {stored_user: decrypt_password(enc_pw.encode()) for stored_user, enc_pw in encrypted_passwords.items()}
 
 
 def get_password(requested_user):
@@ -106,7 +103,28 @@ python script.py put <user> <password>
 
 python script.py put <user> clipboard
 """
+
 if __name__ == "__main__":
+    init = True
+    while init:
+        if not check_key_file():
+            answer = input(f"Key file not found. Check configuration and README.md. If this is your first run, can we create in default directory {config_dir}? Y/N ").lower()
+            if answer == "y":
+                make_dirs()
+                generate_key()
+            else:
+                print("Key required for use, exiting.")
+                exit(1)
+        elif not check_password_file():
+            answer = input(f"Password file not found. Check configuration and README.md. If this is your first run, we can create in default directory {config_dir}? Y/N ").lower()
+            if answer == "y":
+                make_dirs()
+                create_empty_file()
+            else:
+                print("Password file required for use, exiting.")
+                exit(1)
+        else:
+            init = False
     if len(sys.argv) < 2 or sys.argv[1].lower() not in ("get", "put"):
         print("Usage: get/put user <password>|clipboard")
     elif sys.argv[1].lower() == "get":
