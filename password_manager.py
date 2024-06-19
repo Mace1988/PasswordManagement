@@ -5,14 +5,20 @@ import json
 import pyperclip
 
 
-config_dir = "/pw_config/"
+config_dir = "/Users/masonfrance/Projects/PasswordManagement/"
 key_file = rf"{config_dir}secret.key"
 password_file = rf"{config_dir}passwords.json"
 
 """
-TODO 2. In the init block, if we blindly generate a new key while having an existing passwords file lingering, we won't be able to decrypt. May need to give a warning and if approved, generate new key and create new blank file?
-
+#TODO 2. In the init block, if we blindly generate a new key while having an existing passwords file lingering, we won't be able to decrypt. May need to give a warning and if approved, generate new key and create new blank file?
+#TODO 3. Add delete functionality.
 """
+
+
+def first_time_initialize():
+    make_dirs()
+    create_empty_file()
+    generate_key()
 
 
 def make_dirs():
