@@ -5,7 +5,8 @@ import json
 import pyperclip
 
 
-config_dir = "/Users/masonfrance/Projects/PasswordManagement/"
+# config_dir = "/Users/masonfrance/Projects/PasswordManagement/"
+config_dir = "/pw_config/"
 key_file = rf"{config_dir}secret.key"
 password_file = rf"{config_dir}passwords.json"
 
