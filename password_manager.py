@@ -11,8 +11,8 @@ key_file = rf"{config_dir}secret.key"
 password_file = rf"{config_dir}passwords.json"
 
 """
-#TODO 2. In the init block, if we blindly generate a new key while having an existing passwords file lingering, we won't be able to decrypt. May need to give a warning and if approved, generate new key and create new blank file?
-#TODO 3. Add delete functionality.
+#TODO 1. In the init block, if we blindly generate a new key while having an existing passwords file lingering, we won't be able to decrypt. May need to give a warning and if approved, generate new key and create new blank file?
+
 """
 
 
@@ -84,6 +84,14 @@ def update_password(user_input, user_password):
         encrypted_passwords = json.load(file)
     encrypted_password = encrypt_password(user_password).decode()
     encrypted_passwords[user_input] = encrypted_password
+    with open(password_file, "w") as file:
+        json.dump(encrypted_passwords, file)
+
+
+def delete_user(user_input):
+    with open(password_file, "r") as file:
+        encrypted_passwords = json.load(file)
+        encrypted_passwords.pop(user_input)
     with open(password_file, "w") as file:
         json.dump(encrypted_passwords, file)
 
