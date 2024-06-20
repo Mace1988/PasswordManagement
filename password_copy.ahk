@@ -4,3 +4,4 @@
 ^!d::Run "python.exe password_manager.py put d_aa-a673538 clipboard"
 ^!q::Run "python.exe password_manager.py put q_aa-a673538 clipboard"
 ^!p::Run "python.exe password_manager.py put aa-a673538 clipboard"
+^!m::Run "python.exe password_manager_gui.py"

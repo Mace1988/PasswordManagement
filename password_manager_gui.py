@@ -12,6 +12,8 @@ BG_LABEL = "grey"
 FG_BUTTON = "black"
 BG_BUTTON = "grey"
 
+# TODO 1. Add yes/no confirmation before delete happens.
+# TODO 2. Delete user/password from entry windows after successfully added.
 
 def check_program_init():
     if password_manager.check_password_file() and password_manager.check_key_file():
@@ -39,15 +41,18 @@ def add_password_to_file():
         else:
             pw_listbox.insert(END, user_button)
             messagebox.showinfo(title="Add Succeeded", message=f"User: {user_button} successfully added")
+        user_entry.delete(0,END)
+        password_entry.delete(0,END)
 
 
 def delete_user():
     input_user = pw_listbox.get(pw_listbox.curselection())
-    print(input_user)
-    password_manager.delete_user(input_user)
-    idx = pw_listbox.get(0, END).index(input_user)
-    pw_listbox.delete(idx)
-    messagebox.showinfo(title="Delete Succeeded", message=f"User: {input_user} successfully removed.")
+    user_response = messagebox.askyesno(title="Are you sure?", message=f"Are you sure you want to delete {input_user}?")
+    if user_response:
+        password_manager.delete_user(input_user)
+        idx = pw_listbox.get(0, END).index(input_user)
+        pw_listbox.delete(idx)
+        messagebox.showinfo(title="Delete Succeeded", message=f"User: {input_user} successfully removed.")
 
 # -------------- UI SETUP -------------- #
 
